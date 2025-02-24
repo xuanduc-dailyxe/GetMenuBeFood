@@ -1,0 +1,133 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Menu beFood</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+
+<body>
+    <div class="container p-3"> 
+        <div class="form-group mb-3">
+            <textarea class="form-control" name="menu" id="menu" cols="30" rows="30"></textarea>
+        </div> 
+        <button class="btn btn-primary mt-3" id="btnCopyMenu">Copy Menu</button>
+        <a class="btn btn-primary mt-3" target="_blank" href="https://food.be.com.vn/resto?id=10794&af_force_deeplink=true&source_caller=sdk&pid=af_app_invites&utm_source=zalo&shortlink=t3h8ytxn&utm_medium=zalo&af_referrer_customer_id=172163&utm_campaign=zalo&af_siteid=1440565902&af_referrer_uid=1720017161149-5797437">Lấy token</a>
+    </div>
+
+    <script>
+        async function getData() { 
+            var guestTokenResponse = await makeRequest("POST", "https://gw.be.com.vn/api/v1/be-delivery-gateway/api/v1/user/guest");
+            var guestToken = guestTokenResponse['access_token']; 
+
+
+            $.ajax({
+                url: 'https://gw.be.com.vn/api/v1/be-marketplace/web/restaurant/detail',
+                type: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'authorization': guestToken
+                },
+                data: JSON.stringify({ "restaurant_id": "10794", "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640, "client_info": { "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640 }, "latitude": 10.77253621500006, "longitude": 106.69798153800008 }),
+                success: function (response) {
+                    var menuText = '=== Cơm văn phòng tên lửa === ' + '\n'; 
+                    var menu = [];
+                    var menu1 = response.data.categories[1].items;
+                    var menu2 = response.data.categories[2].items;
+                    var menu3 = response.data.categories[3].items;
+                    menu = [...menu1, ...menu2, ...menu3];
+                    menu = menu.filter(function (item) {
+                        return item.is_active == 1;
+                    }); 
+
+                    var menuCanh = response.data.categories[0].items;
+                    menuCanh = menuCanh.filter(function (item) {
+                        return item.is_active == 1 && item.price != 40000;;
+                    });
+                   
+                    var trung = menu.filter(function (item) {
+                        return item.price == 27500;
+                    });
+                    menu = menu.filter(function (item) {
+                        return item.price != 27500;
+                    });
+                    $.each(menu, function (index, item) {
+                        menuText += item.item_name + '\n';
+                    });
+
+
+                    if(trung.length > 0){
+                        menuText += '-------' + '\n'; 
+                        $.each(menuCanh, function (index, item) {
+                            menuText += trung[0].item_name + " - " + item.item_name + '\n';
+                        });
+                    }
+                   
+
+                     
+                    console.log("response", response)
+                    
+                   
+                    $('#menu').val(menuText);
+                    
+                    setTimeout(function () {
+                        $('#menu').select();
+                        document.execCommand('copy');
+                    }, 1000); 
+                }
+            });
+        }
+
+        function makeRequest(method, url, params = {}, accessToken = null) {
+            return new Promise(function (resolve, reject) {
+                let xhr = new XMLHttpRequest();
+                xhr.open(method, url);
+                xhr.setRequestHeader("content-type", "application/json")
+                if (accessToken != null) {
+                    xhr.setRequestHeader("Authorization", "Bearer " + accessToken);
+                }
+                xhr.responseType = 'json';
+                xhr.onload = function () {
+                    if (this.status >= 200 && this.status < 300) {
+                        resolve(xhr.response);
+                    } else {
+                        reject({
+                            status: this.status,
+                            statusText: xhr.statusText
+                        });
+                    }
+                };
+                xhr.onerror = function () {
+                    reject({
+                        status: this.status,
+                        statusText: xhr.statusText
+                    });
+                };
+                xhr.send(JSON.stringify(params));
+            });
+        }
+
+
+      
+
+        $(document).ready(function () {  
+            getData(); 
+            // https://food.be.com.vn/resto?id=10794&af_force_deeplink=true&source_caller=sdk&pid=af_app_invites&utm_source=zalo&shortlink=t3h8ytxn&utm_medium=zalo&af_referrer_customer_id=172163&utm_campaign=zalo&af_siteid=1440565902&af_referrer_uid=1720017161149-5797437
+           
+            $('#btnCopyMenu').click(function () {
+                $('#menu').select();
+                document.execCommand('copy');
+            });
+
+           
+ 
+        });
+    </script>
+</body>
+
+</html>
