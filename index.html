@@ -11,77 +11,190 @@
 </head>
 
 <body>
-    <div class="container p-3"> 
+    <div class="container p-3">
+        <div class="form-group mb-3">
+            <div class="row">
+                <div class="col-lg-8">
+                    <select class="form-control" name="" id="restaurant_id"></select>
+                </div>
+                <div class="col-lg-4">
+                    <button class="btn btn-primary" id="btnCopyMenu">Copy Menu</button>
+                    <a class="btn btn-primary" target="_blank" href="https://food.be.com.vn/resto?id=10794&af_force_deeplink=true&source_caller=sdk&pid=af_app_invites&utm_source=zalo&shortlink=t3h8ytxn&utm_medium=zalo&af_referrer_customer_id=172163&utm_campaign=zalo&af_siteid=1440565902&af_referrer_uid=1720017161149-5797437">Lấy token</a>
+                </div>
+            </div>
+        </div>
         <div class="form-group mb-3">
             <textarea class="form-control" name="menu" id="menu" cols="30" rows="30"></textarea>
-        </div> 
-        <button class="btn btn-primary mt-3" id="btnCopyMenu">Copy Menu</button>
-        <a class="btn btn-primary mt-3" target="_blank" href="https://food.be.com.vn/resto?id=10794&af_force_deeplink=true&source_caller=sdk&pid=af_app_invites&utm_source=zalo&shortlink=t3h8ytxn&utm_medium=zalo&af_referrer_customer_id=172163&utm_campaign=zalo&af_siteid=1440565902&af_referrer_uid=1720017161149-5797437">Lấy token</a>
+        </div>
+
     </div>
 
     <script>
-        async function getData() { 
-            var guestTokenResponse = await makeRequest("POST", "https://gw.be.com.vn/api/v1/be-delivery-gateway/api/v1/user/guest");
-            var guestToken = guestTokenResponse['access_token']; 
-
-
-            $.ajax({
-                url: 'https://gw.be.com.vn/api/v1/be-marketplace/web/restaurant/detail',
-                type: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'authorization': guestToken
-                },
-                data: JSON.stringify({ "restaurant_id": "10794", "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640, "client_info": { "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640 }, "latitude": 10.77253621500006, "longitude": 106.69798153800008 }),
-                success: function (response) {
-                    var menuText = '=== Cơm văn phòng tên lửa === ' + '\n'; 
-                    var menu = [];
-                    var menu1 = response.data.categories[1].items;
-                    var menu2 = response.data.categories[2].items;
-                    var menu3 = response.data.categories[3].items;
-                    menu = [...menu1, ...menu2, ...menu3];
-                    menu = menu.filter(function (item) {
-                        return item.is_active == 1;
-                    }); 
-
-                    var menuCanh = response.data.categories[0].items;
-                    menuCanh = menuCanh.filter(function (item) {
-                        return item.is_active == 1 && item.price != 40000;;
-                    });
-                   
-                    var trung = menu.filter(function (item) {
-                        return item.price == 27500;
-                    });
-                    menu = menu.filter(function (item) {
-                        return item.price != 27500;
-                    });
-                    $.each(menu, function (index, item) {
-                        menuText += item.item_name + '\n';
-                    });
-
-
-                    if(trung.length > 0){
-                        menuText += '-------' + '\n'; 
-                        $.each(menuCanh, function (index, item) {
-                            menuText += trung[0].item_name + " - " + item.item_name + '\n';
-                        });
-                    }
-                   
-
-                     
-                    console.log("response", response)
-                    
-                   
-                    $('#menu').val(menuText);
-                    
-                    setTimeout(function () {
-                        $('#menu').select();
-                        document.execCommand('copy');
-                    }, 1000); 
+        // Thêm mảng restaurants ở đầu file
+        const restaurants = [
+            {
+                id: 35205,
+                name: "Cơm Tấm 321 - Lê Quang Định",
+                menuIndexes: {
+                    main: [2, 3, 4, 5]// menu chính từ categories[0] 
                 }
+            },
+            {
+                id: 29472,
+                name: "Cô Lài - Cơm Tấm & Bún Thịt Nướng - Lê Đức Thọ",
+                menuIndexes: {
+                    main: [0, 1, 2, 3, 4]// menu chính từ categories[0] 
+                }
+            },
+            {
+                id: 23715,
+                name: "Cơm Chiên Xá Xíu Vạn Ngân - Tú Mỡ",
+                 menuIndexes: {
+                    main: [0, 1, 2, 3]// menu chính từ categories[0] 
+                }
+            },
+            {
+                id: 7436,
+                name: "Cơm gà Hải Nam - Bình giã",
+                menuIndexes: {
+                    main: [0, 2, 4, 7]// menu chính từ categories[0] 
+                }
+            },
+            {
+                id: 32893,
+                name: "Cơm Ngon Sài Gòn - Hậu Giang",
+                menuIndexes: {
+                    main: [0]// menu chính từ categories[0] 
+                }
+            },
+            
+            {
+                id: 7721,
+                name: "Cơm tấm Tài",
+                menuIndexes: {
+                    main: [3], // menu chính từ categories[2]
+                    soup: [2], // canh từ categories[0]
+                }
+            },
+            {
+                id: 8783,
+                name: "Cơm nhà",
+                menuIndexes: {
+                    main: [2], // menu chính từ categories[2]
+                    soup: [0], // canh từ categories[0]
+                }
+            },
+            {
+                id: 10794,
+                name: "Cơm văn phòng tên lửa",
+                menuIndexes: {
+                    main: [1, 3], // menu chính từ categories[1] và [3]
+                    extra: [2], // món thêm từ categories[2]
+                    soup: [0] // canh từ categories[0]
+                }
+            },
+            {
+                id: 28871,
+                name: "Cơm Cô Út Quán",
+                menuIndexes: {
+                    main: [0], // menu chính từ categories[0]
+                    soup: [0] // canh từ categories[0]
+                }
+            },
+            {
+                id: 75255,
+                name: "Cơm Calmette - Gà Xối Mỡ & Ba Rọi, Bắp Bò - 92 Hoa Đào",
+                menuIndexes: {
+                    main: [0, 1, 2, 3, 4, 5], // menu chính từ categories[0]
+                    soup: [0] // canh từ categories[0]
+                }
+            }
+        ];
+
+        function loadRestaurants() {
+            const select = $("#restaurant_id");
+            select.empty();
+            restaurants.forEach(restaurant => {
+                select.append(`<option value="${restaurant.id}">${restaurant.name}</option>`);
             });
         }
+
+        async function getData(restaurant_id) {
+            try {
+                restaurant_id = parseInt(restaurant_id);
+                const restaurant = restaurants.find(r => r.id === restaurant_id);
+                var guestTokenResponse = await makeRequest("POST", "https://gw.be.com.vn/api/v1/be-delivery-gateway/api/v1/user/guest");
+                var guestToken = guestTokenResponse['access_token'];
+
+                $.ajax({
+                    url: 'https://gw.be.com.vn/api/v1/be-marketplace/web/restaurant/detail',
+                    type: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'authorization': guestToken
+                    },
+                    data: JSON.stringify({ "restaurant_id": restaurant_id.toString(), "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640, "client_info": { "locale": "vi", "app_version": "11267", "version": "1.1.267", "device_type": 3, "operator_token": "0b28e008bc323838f5ec84f718ef11e6", "customer_package_name": "xyz.be.food", "device_token": "0845b309c7b9b957afd9ecf775a4c21f", "ad_id": "", "screen_width": 360, "screen_height": 640 }, "latitude": 10.77253621500006, "longitude": 106.69798153800008 }),
+                    success: function (response) {
+                        console.log(response);
+                        var brand = $('option[value="' + restaurant_id + '"').text();
+                        var menuText = `=== ${brand} === \n`;
+                        var menu = [];
+                        var menuThem = [];
+
+                        // Lấy menu chính
+                        restaurant.menuIndexes.main.forEach(index => {
+                            menu = [...menu, ...response.data.categories[index].items];
+                        });
+
+                        menu = menu.filter(item => item.is_active == 1 && item.price != 27500);
+
+
+                        $.each(menu, function (index, item) {
+                            menuText += item.item_name + '\n';
+                        });
+
+                        // Xử lý menu thêm nếu có
+                        if (restaurant.menuIndexes.extra && restaurant.menuIndexes.soup) {
+                            var menuCanh = response.data.categories[restaurant.menuIndexes.soup[0]].items;
+                            menuCanh = menuCanh.filter(item => item.is_active == 1 && item.price != 40000);
+
+                            menuThem = [];
+                            restaurant.menuIndexes.extra.forEach(index => {
+                                menuThem = [...menuThem, ...response.data.categories[index].items];
+                            });
+
+                            menuThem = menuThem.filter(item => item.is_active == 1);
+
+                            var trungKM = response.data.categories[restaurant.menuIndexes.main[1]].items.filter(item =>
+                                item.price == 27500
+                            );
+
+                            if (trungKM.length > 0) {
+                                menuText += '\n ===== Combo ======\n';
+                                $.each(menuCanh, function (index, item) {
+                                    menuText += trungKM[0].item_name + " - " + item.item_name + '\n';
+                                });
+                            }
+
+                            menuText += '\n ===== Món Thêm (Không cơm) ======\n';
+                            $.each(menuThem, function (index, item) {
+                                menuText += item.item_name + '\n';
+                            });
+                        }
+
+                        $('#menu').val(menuText);
+                        setTimeout(() => {
+                            $('#btnCopyMenu').trigger('click');
+                        }, 100);
+                    }
+                });
+            } catch (error) {
+                console.log(error);
+            }
+
+        }
+
 
         function makeRequest(method, url, params = {}, accessToken = null) {
             return new Promise(function (resolve, reject) {
@@ -110,17 +223,27 @@
                 };
                 xhr.send(JSON.stringify(params));
             });
-        } 
+        }
 
-        $(document).ready(function () {  
-            getData(); 
+
+
+
+        $(document).ready(function () {
+            loadRestaurants(); // Thêm dòng này
+            getData(35205);
+            $("#restaurant_id").val(35205);
+            $("#restaurant_id").on("change", function () {
+                getData($(this).val());;
+            })
             // https://food.be.com.vn/resto?id=10794&af_force_deeplink=true&source_caller=sdk&pid=af_app_invites&utm_source=zalo&shortlink=t3h8ytxn&utm_medium=zalo&af_referrer_customer_id=172163&utm_campaign=zalo&af_siteid=1440565902&af_referrer_uid=1720017161149-5797437
-           
+
             $('#btnCopyMenu').click(function () {
                 $('#menu').select();
                 document.execCommand('copy');
             });
- 
+
+
+
         });
     </script>
 </body>
